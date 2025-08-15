@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sorting Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>Sorting Visualizer</h2>
+      <label for="selectAlgorithm">Algorithm:</label>
+      <select id="selectAlgorithm">
+        <option value="bubbleSort">Bubble Sort</option>
+        <option value="selectionSort">Selection Sort</option>
+        <option value="quickSort">Quick Sort</option>
+      </select>
+
+      <label for="numbersBars">Number of Bars:</label>
+      <input type="number" id="numbersBars" min="1" max="50" value="20"/>
+
+      <button id="generateBtn">Generate Array</button>
+
+      <label for="customArray">Custom Array:</label>
+      <input type="text" id="customArray" placeholder="e.g. 50,20,30" />
+      <button id="setCustomBtn">Set Custom Array</button>
+
+      <label for="speedSlider">Speed (ms): <span id="speedValue">300</span></label>
+      <input type="range" id="speedSlider" min="50" max="2000" step="50" value="300" />
+
+      <button id="solveBtn">Sort</button>
+      <button id="resetBtn">Reset</button>
+
+      <div class="complexity">
+        <p><strong>Time:</strong> <span id="timeComplexity">O(n log n)</span></p>
+        <p><strong>Space:</strong> <span id="spaceComplexity">O(log n)</span></p>
+        <p><strong>Best Algorithm:</strong> <span id="bestAlgorithm">Quick Sort</span></p>
+      </div>
+    </div>
+
+    <div class="stage-container">
+      <div id="stage" class="stage"></div>
+      <div id="doneMessage" class="done-message">Sorting Completed!</div>
+    </div>
+  </div>
+
+  <script type="module" src="index.js"></script>
+</body>
+</html>
