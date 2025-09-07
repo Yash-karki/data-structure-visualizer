@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm & Data Structure Visualizer</title>
+    <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>Algorithm & Data Structure Visualizer</h1>
+            <p>Interactive learning platform to understand algorithms and data structures through visual animations</p>
+        </header>
+
+        <main class="visualizers">
+            <div class="card" onclick="navigateTo('sorting.html')">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M3 12h18M3 18h18"/>
+                    </svg>
+                </div>
+                <h2>Sorting Visualizer</h2>
+                <p>Watch how different sorting algorithms organize data step by step</p>
+                <ul>
+                    <li>Bubble Sort, Selection Sort, Quick Sort</li>
+                    <li>Merge Sort, Heap Sort, Insertion Sort</li>
+                    <li>Time & Space complexity analysis</li>
+                    <li>Adjustable speed and custom arrays</li>
+                </ul>
+                <div class="card-footer">
+                    <span class="difficulty easy">Beginner Friendly</span>
+                </div>
+            </div>
+
+            <div class="card" onclick="navigateTo('searching.html')">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                </div>
+                <h2>Searching Visualizer</h2>
+                <p>Explore how algorithms find elements in different data arrangements</p>
+                <ul>
+                    <li>Linear Search, Binary Search</li>
+                    <li>Jump Search, Exponential Search</li>
+                    <li>Visual step-by-step process</li>
+                    <li>Performance comparisons</li>
+                </ul>
+                <div class="card-footer">
+                    <span class="difficulty medium">Intermediate</span>
+                </div>
+            </div>
+
+            <div class="card" onclick="navigateTo('datastructures.html')">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                </div>
+                <h2>Data Structure Visualizer</h2>
+                <p>See how data structures store and organize information dynamically</p>
+                <ul>
+                    <li>Arrays, Stacks, Queues</li>
+                    <li>Linked Lists, Trees, Graphs</li>
+                    <li>Insert, delete, and traverse operations</li>
+                    <li>Memory representation</li>
+                </ul>
+                <div class="card-footer">
+                    <span class="difficulty advanced">Advanced</span>
+                </div>
+            </div>
+        </main>
+
+        <footer class="features">
+            <div class="feature">
+                <h3>🎯 Interactive Learning</h3>
+                <p>Step-by-step visual animations with explanations</p>
+            </div>
+            <div class="feature">
+                <h3>⚡ Real-time Control</h3>
+                <p>Adjust speed, input custom data, and control execution</p>
+            </div>
+            <div class="feature">
+                <h3>📊 Performance Analysis</h3>
+                <p>Compare time and space complexity across algorithms</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function navigateTo(page) {
+            window.location.href = page;
+        }
+
+        // Add hover effects and animations
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-10px)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data Structure Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="datastructures.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>Data Structure Visualizer</h2>
+      
+      <label for="selectDataStructure">Data Structure:</label>
+      <select id="selectDataStructure">
+        <option value="array">Array</option>
+        <option value="stack">Stack</option>
+        <option value="queue">Queue</option>
+        <option value="linkedList">Linked List</option>
+        <option value="binaryTree">Binary Tree</option>
+        <option value="bst">Binary Search Tree</option>
+      </select>
+
+      <div class="operation-controls">
+        <h3>Operations</h3>
+        
+        <div class="input-group">
+          <label for="operationValue">Value:</label>
+          <input type="number" id="operationValue" min="1" max="99" value="10" placeholder="Enter value"/>
+        </div>
+
+        <div class="input-group" id="positionGroup">
+          <label for="positionValue">Position/Index:</label>
+          <input type="number" id="positionValue" min="0" value="0" placeholder="Enter position"/>
+        </div>
+
+        <div class="operation-buttons">
+          <button id="insertBtn" class="operation-btn insert">Insert</button>
+          <button id="deleteBtn" class="operation-btn delete">Delete</button>
+          <button id="searchBtn" class="operation-btn search">Search</button>
+          <button id="traverseBtn" class="operation-btn traverse">Traverse</button>
+        </div>
+
+        <div class="special-operations" id="specialOps">
+          <button id="clearBtn" class="secondary-btn">Clear All</button>
+          <button id="randomBtn" class="secondary-btn">Add Random</button>
+        </div>
+      </div>
+
+      <label for="speedSlider">Animation Speed: <span id="speedValue">Medium</span></label>
+      <input type="range" id="speedSlider" min="1" max="5" step="1" value="3" />
+
+      <div class="data-structure-info">
+        <div class="description">
+          <h3 id="structureName">Array</h3>
+          <p id="structureDescription">A collection of elements stored in contiguous memory locations, accessible by index.</p>
+        </div>
+        
+        <div class="complexity-info">
+          <h4>Time Complexity:</h4>
+          <div class="complexity-grid">
+            <div class="complexity-item">
+              <span class="label">Access:</span>
+              <span id="accessComplexity" class="value">O(1)</span>
+            </div>
+            <div class="complexity-item">
+              <span class="label">Search:</span>
+              <span id="searchComplexity" class="value">O(n)</span>
+            </div>
+            <div class="complexity-item">
+              <span class="label">Insert:</span>
+              <span id="insertComplexity" class="value">O(n)</span>
+            </div>
+            <div class="complexity-item">
+              <span class="label">Delete:</span>
+              <span id="deleteComplexity" class="value">O(n)</span>
+            </div>
+          </div>
+          
+          <div class="space-complexity">
+            <span class="label">Space Complexity:</span>
+            <span id="spaceComplexity" class="value">O(n)</span>
+          </div>
+        </div>
+
+        <div class="properties">
+          <h4>Properties:</h4>
+          <ul id="propertiesList">
+            <li>Random access to elements</li>
+            <li>Fixed size (in most implementations)</li>
+            <li>Elements stored contiguously</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-container">
+      <div class="controls-top">
+        <button id="backBtn" class="back-btn">← Back to Home</button>
+        <div id="stepInfo" class="step-info">Select a data structure to begin</div>
+        <div id="sizeInfo" class="size-info">Size: <span id="currentSize">0</span></div>
+      </div>
+      
+      <div class="visualization-area">
+        <div id="memoryView" class="memory-view">
+          <h4>Memory Representation</h4>
+          <div id="memoryBlocks" class="memory-blocks"></div>
+        </div>
+
+        <div id="structureView" class="structure-view">
+          <div id="structureStage" class="structure-stage"></div>
+          <div id="operationMessage" class="operation-message">
+            <div class="message-icon" id="messageIcon">ℹ️</div>
+            <div class="message-text" id="messageText">Ready to perform operations</div>
+            <button class="close-message-btn" id="closeMessageBtn">×</button>
+          </div>
+        </div>
+
+        <div id="codeView" class="code-view">
+          <h4>Code Representation</h4>
+          <pre id="codeBlock"><code id="codeContent">// Select an operation to see the code</code></pre>
+        </div>
+      </div>
+
+      <div id="traversalResult" class="traversal-result">
+        <h4>Traversal Result:</h4>
+        <div id="traversalOutput" class="traversal-output"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="datastructures.js"></script>
+</body>
+</html>

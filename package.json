@@ -1,0 +1,29 @@
+{
+  "name": "algorithm-data-structure-visualizer",
+  "version": "1.0.0",
+  "description": "Interactive web application for visualizing algorithms and data structures",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8080",
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "algorithms",
+    "data-structures",
+    "visualization",
+    "education",
+    "sorting",
+    "searching",
+    "interactive"
+  ],
+  "author": "Algorithm Visualizer Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/algorithm-visualizer"
+  },
+  "homepage": ".",
+  "devDependencies": {},
+  "dependencies": {}
+}

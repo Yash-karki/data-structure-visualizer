@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sorting Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="sorting.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>Sorting Visualizer</h2>
+      <label for="selectAlgorithm">Algorithm:</label>
+      <select id="selectAlgorithm">
+        <option value="bubbleSort">Bubble Sort</option>
+        <option value="selectionSort">Selection Sort</option>
+        <option value="insertionSort">Insertion Sort</option>
+        <option value="mergeSort">Merge Sort</option>
+        <option value="quickSort">Quick Sort</option>
+        <option value="heapSort">Heap Sort</option>
+      </select>
+
+      <label for="numbersBars">Number of Bars:</label>
+      <input type="number" id="numbersBars" min="5" max="100" value="30"/>
+
+      <button id="generateBtn">Generate Array</button>
+
+      <label for="customArray">Custom Array:</label>
+      <input type="text" id="customArray" placeholder="e.g. 50,20,30,10,40" />
+      <button id="setCustomBtn">Set Custom Array</button>
+
+      <label for="speedSlider">Speed: <span id="speedValue">Medium</span></label>
+      <input type="range" id="speedSlider" min="1" max="5" step="1" value="3" />
+
+      <div class="control-buttons">
+        <button id="solveBtn" class="primary-btn">Start Sorting</button>
+        <button id="pauseBtn" class="secondary-btn" disabled>Pause</button>
+        <button id="resetBtn" class="secondary-btn">Reset</button>
+      </div>
+
+      <div class="algorithm-info">
+        <div id="algorithmDescription" class="description">
+          <h3 id="algorithmName">Bubble Sort</h3>
+          <p id="algorithmExplanation">Compares adjacent elements and swaps them if they're in the wrong order. Repeats until no swaps are needed.</p>
+        </div>
+        <div class="complexity">
+          <div class="complexity-item">
+            <span class="label">Best Case:</span>
+            <span id="bestCase" class="value">O(n)</span>
+          </div>
+          <div class="complexity-item">
+            <span class="label">Average:</span>
+            <span id="avgCase" class="value">O(n²)</span>
+          </div>
+          <div class="complexity-item">
+            <span class="label">Worst Case:</span>
+            <span id="worstCase" class="value">O(n²)</span>
+          </div>
+          <div class="complexity-item">
+            <span class="label">Space:</span>
+            <span id="spaceComplexity" class="value">O(1)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-container">
+      <div class="controls-top">
+        <button id="backBtn" class="back-btn">← Back to Home</button>
+        <div id="stepInfo" class="step-info">Ready to sort</div>
+        <div id="comparisons" class="stats">Comparisons: <span id="compCount">0</span></div>
+        <div id="swaps" class="stats">Swaps: <span id="swapCount">0</span></div>
+      </div>
+      <div id="stage" class="stage"></div>
+      <div id="doneMessage" class="done-message">
+        <div class="success-icon">🎉</div>
+        <div class="message-text">Sorting Completed!</div>
+        <div class="stats-summary">
+          <span>Comparisons: <span id="finalComparisons">0</span></span>
+          <span>Swaps: <span id="finalSwaps">0</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="sorting.js"></script>
+</body>
+</html>
