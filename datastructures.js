@@ -45,8 +45,8 @@ class DataStructureVisualizer {
                 this.modules.set('stack', {
                     insert: this.insertStack.bind(this),
                     delete: this.deleteStack.bind(this),
-                    search: this.searchLinear.bind(this),
-                    traverse: this.traverseLinear.bind(this),
+                    search: this.peekStack.bind(this),
+                    traverse: this.traverseStack.bind(this),
                     render: this.renderStack.bind(this)
                 });
             }
@@ -54,7 +54,7 @@ class DataStructureVisualizer {
                 this.modules.set('queue', {
                     insert: this.insertQueue.bind(this),
                     delete: this.deleteQueue.bind(this),
-                    search: this.searchLinear.bind(this),
+                    search: this.peekQueue.bind(this),
                     traverse: this.traverseLinear.bind(this),
                     render: this.renderQueue.bind(this)
                 });
@@ -162,6 +162,7 @@ class DataStructureVisualizer {
         // Tree specific state
         this.treeRoot = null;
         this.treeNodes = new Map();
+        this.currentLLPtr = null;
     }
 
     initializeEventListeners() {
@@ -244,10 +245,18 @@ class DataStructureVisualizer {
         this.propertiesList.innerHTML = info.properties.map(prop => `<li>${prop}</li>`).join('');
         
         // Update UI based on structure
-        if (this.currentStructure === 'array') {
+        if (this.currentStructure === 'array' || this.currentStructure === 'linkedList') {
             this.positionGroup.classList.remove('hidden');
         } else {
             this.positionGroup.classList.add('hidden');
+        }
+        // Adjust action button labels for structure-specific semantics
+        if (this.currentStructure === 'stack') {
+            this.searchBtn.textContent = 'Peek';
+        } else if (this.currentStructure === 'queue') {
+            this.searchBtn.textContent = 'Front/Rear';
+        } else {
+            this.searchBtn.textContent = 'Search';
         }
         
         this.clearStructure();
@@ -411,16 +420,7 @@ class DataStructureVisualizer {
         this.showMessage("Random data generated", "🎲");
     }
 
-    clearStructure() {
-        this.data = [];
-        this.treeRoot = null;
-        this.treeNodes = new Map();
-        this.structureStage.innerHTML = '';
-        this.memoryBlocks.innerHTML = '';
-        this.traversalResult.classList.remove('show');
-        this.updateSize();
-        this.showMessage("Structure cleared", "🗑️");
-    }
+    // (removed duplicate clearStructure; unified implementation exists later in file)
 
     async performOperation(operation) {
         if (this.isRunning) return;
@@ -428,9 +428,27 @@ class DataStructureVisualizer {
         const value = parseInt(this.operationValue.value);
         const position = parseInt(this.positionValue.value);
         
-        if (operation !== 'traverse' && operation !== 'clear' && isNaN(value)) {
-            this.showMessage("Please enter a valid value", "⚠️");
-            return;
+        // Validation rules vary by structure and operation
+        if (operation !== 'traverse' && operation !== 'clear') {
+            if (this.currentStructure === 'array' && operation === 'delete') {
+                // For array delete, we require a valid position (value field ignored)
+                if (isNaN(position)) {
+                    this.showMessage("Please enter a valid position/index", "⚠️");
+                    return;
+                }
+            } else if (this.currentStructure === 'stack' && operation === 'delete') {
+                // Stack pop requires no value
+                // no-op
+            } else if (this.currentStructure === 'queue' && operation === 'delete') {
+                // Queue dequeue requires no value
+                // no-op
+            } else if (operation === 'delete' || operation === 'insert' || operation === 'search') {
+                // For other structures/ops we require a value
+                if (isNaN(value)) {
+                    this.showMessage("Please enter a valid value", "⚠️");
+                    return;
+                }
+            }
         }
         
         this.isRunning = true;
@@ -479,15 +497,20 @@ class DataStructureVisualizer {
         this.showMessage(`Successfully inserted ${value} at position ${position}`, "✅");
     }
 
-    async deleteArray(position) {
-        if (position >= this.data.length || this.data.length === 0) {
+    async deleteArray(value, position) {
+        // Support both call styles: delete(position) and delete(value, position)
+        // When invoked via performOperation it passes (value, position). We need the index.
+        if (typeof position !== 'number' || isNaN(position)) {
+            position = typeof value === 'number' ? value : 0;
+        }
+        if (position >= this.data.length || this.data.length === 0 || position < 0) {
             this.showMessage("Invalid position or empty array", "❌");
             return;
         }
         
-        const value = this.data[position];
+        const deletedValue = this.data[position];
         this.showMessage(`Deleting element at position ${position}`, "🗑️");
-        this.updateCodeView('arrayDelete', value, position);
+        this.updateCodeView('arrayDelete', deletedValue, position);
         
         // Highlight element to be deleted
         const elements = this.structureStage.querySelectorAll('.ds-element');
@@ -543,10 +566,11 @@ class DataStructureVisualizer {
         this.showMessage(`Popping ${value} from stack`, "⬇️");
         this.updateCodeView('stackPop', value);
         
-        // Highlight top element
-        const elements = this.structureStage.querySelectorAll('.ds-element');
+        // Highlight top element (last visual element)
+        const elements = this.structureStage.querySelectorAll('.stack-element');
         if (elements.length > 0) {
-            elements[0].classList.add('deleting');
+            const topIdx = elements.length - 1;
+            elements[topIdx].classList.add('deleting');
             await this.sleep(this.speed);
         }
         
@@ -562,7 +586,7 @@ class DataStructureVisualizer {
         this.structureStage.innerHTML = '<div class="stack-container"></div>';
         const container = this.structureStage.querySelector('.stack-container');
         
-        for (let i = this.data.length - 1; i >= 0; i--) {
+        for (let i = 0; i < this.data.length; i++) {
             const element = document.createElement('div');
             element.className = 'ds-element stack-element';
             element.textContent = this.data[i];
@@ -571,10 +595,25 @@ class DataStructureVisualizer {
                 element.innerHTML += '<div class="stack-pointer">← TOP</div>';
             }
             
-            element.style.animationDelay = `${(this.data.length - 1 - i) * 100}ms`;
+            element.style.animationDelay = `${i * 100}ms`;
             container.appendChild(element);
             await this.sleep(50);
         }
+    }
+
+    async traverseStack() {
+        this.showMessage("Traversing stack from TOP to BOTTOM...", "🔄");
+        const elements = this.structureStage.querySelectorAll('.stack-element');
+        for (let i = elements.length - 1; i >= 0; i--) {
+            elements[i].classList.add('highlight');
+            const traversalItem = document.createElement('div');
+            traversalItem.className = 'traversal-item';
+            traversalItem.textContent = elements[i].textContent;
+            this.traversalOutput.appendChild(traversalItem);
+            await this.sleep(this.speed);
+            elements[i].classList.remove('highlight');
+        }
+        this.showMessage("Stack traversal completed", "✅");
     }
 
     // Queue Operations
@@ -692,56 +731,104 @@ class DataStructureVisualizer {
     }
 
     // Linked List Operations
-    async insertLinkedList(value) {
+    async insertLinkedList(value, position) {
         this.showMessage(`Inserting ${value} into linked list`, "➕");
         this.updateCodeView('linkedListInsert', value);
         
-        this.data.push(value);
+        // Determine position: if not provided -> end; clamp to [0, length]
+        let pos = parseInt(position);
+        if (isNaN(pos)) pos = this.data.length; // default to end
+        if (pos < 0) pos = 0;
+        if (pos > this.data.length) pos = this.data.length;
+        
+        // Visualize traversal to position-1 (node after which we insert)
+        if (pos > 0) {
+            await this.moveLLPtrTo(pos - 1);
+        } else {
+            // Point to head
+            this.updateLinkedListPtr(0);
+            await this.sleep(this.speed / 2);
+        }
+        
+        this.data.splice(pos, 0, value);
         await this.renderLinkedList();
         this.updateSize();
         this.updateMemoryView();
         
-        this.showMessage(`Successfully inserted ${value}`, "✅");
+        this.showMessage(`Inserted ${value} at position ${pos}`, "✅");
     }
 
-    async deleteLinkedList(value) {
-        const index = this.data.indexOf(value);
-        if (index === -1) {
-            this.showMessage(`Value ${value} not found in linked list`, "❌");
-            return;
+    async deleteLinkedList(value, position) {
+        // Deletion by position if provided, else by value
+        let index = -1;
+        const pos = parseInt(position);
+        if (!isNaN(pos)) {
+            if (pos < 0 || pos >= this.data.length) {
+                this.showMessage("Invalid position for delete", "❌");
+                return;
+            }
+            index = pos;
+        } else {
+            index = this.data.indexOf(value);
+            if (index === -1) {
+                this.showMessage(`Value ${value} not found in linked list`, "❌");
+                return;
+            }
         }
         
-        this.showMessage(`Deleting ${value} from linked list`, "🗑️");
+        this.showMessage(`Deleting node at position ${index}`, "🗑️");
         this.updateCodeView('linkedListDelete', value);
+        
+        // Visualize traversal to node to delete
+        if (index > 0) {
+            await this.moveLLPtrTo(index - 1);
+        } else {
+            this.updateLinkedListPtr(0);
+            await this.sleep(this.speed / 2);
+        }
+        
+        // Highlight node to delete
+        const nodes = this.structureStage.querySelectorAll('.linkedlist-node');
+        if (nodes[index]) {
+            const dataEl = nodes[index].querySelector('.node-data');
+            if (dataEl) {
+                dataEl.classList.add('deleting');
+                await this.sleep(this.speed);
+            }
+        }
         
         this.data.splice(index, 1);
         await this.renderLinkedList();
         this.updateSize();
         this.updateMemoryView();
         
-        this.showMessage(`Successfully deleted ${value}`, "✅");
+        this.showMessage(`Deleted node at position ${index}`, "✅");
     }
 
     async searchLinkedList(value) {
         this.showMessage(`Searching for ${value} in linked list...`, "🔍");
         this.updateCodeView('linkedListSearch', value);
         
-        const elements = this.structureStage.querySelectorAll('.node-data');
+        const elements = this.structureStage.querySelectorAll('.linkedlist-node');
         let found = false;
         
         for (let i = 0; i < this.data.length; i++) {
             if (elements[i]) {
-                elements[i].classList.add('highlight');
+                this.updateLinkedListPtr(i);
+                const nodeDataEl = elements[i].querySelector('.node-data');
+                if (nodeDataEl) nodeDataEl.classList.add('highlight');
                 await this.sleep(this.speed);
                 
                 if (this.data[i] === value) {
-                    elements[i].classList.remove('highlight');
-                    elements[i].classList.add('success');
+                    if (nodeDataEl) {
+                        nodeDataEl.classList.remove('highlight');
+                        nodeDataEl.classList.add('success');
+                    }
                     this.showMessage(`Found ${value} at position ${i}`, "✅");
                     found = true;
                     break;
                 } else {
-                    elements[i].classList.remove('highlight');
+                    if (nodeDataEl) nodeDataEl.classList.remove('highlight');
                 }
             }
         }
@@ -751,14 +838,36 @@ class DataStructureVisualizer {
         }
     }
 
+    // Stack-specific Peek operation
+    async peekStack() {
+        if (this.data.length === 0) {
+            this.showMessage("Stack is empty", "❌");
+            return;
+        }
+        this.showMessage("Peeking TOP element", "👀");
+        const elements = this.structureStage.querySelectorAll('.stack-element');
+        if (elements.length > 0) {
+            const topIdx = elements.length - 1;
+            elements[topIdx].classList.add('highlight');
+            await this.sleep(this.speed);
+            elements[topIdx].classList.remove('highlight');
+            elements[topIdx].classList.add('success');
+            await this.sleep(this.speed / 2);
+            elements[topIdx].classList.remove('success');
+            this.showMessage(`TOP = ${this.data[this.data.length - 1]}`, "✅");
+        }
+    }
+
     async traverseLinkedList() {
         this.showMessage("Traversing linked list...", "🔄");
         
-        const elements = this.structureStage.querySelectorAll('.node-data');
+        const elements = this.structureStage.querySelectorAll('.linkedlist-node');
         
         for (let i = 0; i < this.data.length; i++) {
             if (elements[i]) {
-                elements[i].classList.add('highlight');
+                this.updateLinkedListPtr(i);
+                const nodeDataEl = elements[i].querySelector('.node-data');
+                if (nodeDataEl) nodeDataEl.classList.add('highlight');
                 
                 const traversalItem = document.createElement('div');
                 traversalItem.className = 'traversal-item';
@@ -767,11 +876,36 @@ class DataStructureVisualizer {
                 this.traversalOutput.appendChild(traversalItem);
                 
                 await this.sleep(this.speed);
-                elements[i].classList.remove('highlight');
+                if (nodeDataEl) nodeDataEl.classList.remove('highlight');
             }
         }
         
         this.showMessage("Linked list traversal completed", "✅");
+    }
+
+    async peekQueue() {
+        if (this.data.length === 0) {
+            this.showMessage("Queue is empty", "❌");
+            return;
+        }
+        const elements = this.structureStage.querySelectorAll('.queue-element');
+        const frontIdx = 0;
+        const rearIdx = elements.length - 1;
+        // Highlight FRONT
+        if (elements[frontIdx]) {
+            elements[frontIdx].classList.add('highlight');
+            this.showMessage(`FRONT = ${this.data[0]}`, "👈");
+            await this.sleep(this.speed);
+            elements[frontIdx].classList.remove('highlight');
+        }
+        // Highlight REAR
+        if (elements[rearIdx] && rearIdx !== frontIdx) {
+            elements[rearIdx].classList.add('highlight');
+            this.showMessage(`REAR = ${this.data[this.data.length - 1]}`, "👉");
+            await this.sleep(this.speed);
+            elements[rearIdx].classList.remove('highlight');
+        }
+        this.showMessage("Front/Rear highlighted", "✅");
     }
 
     async renderLinkedList() {
@@ -790,12 +924,46 @@ class DataStructureVisualizer {
             pointer.className = i === this.data.length - 1 ? 'node-pointer null' : 'node-pointer';
             
             nodeContainer.appendChild(nodeData);
-            if (i < this.data.length - 1) {
-                nodeContainer.appendChild(pointer);
+            // Always append pointer; last node shows NULL
+            nodeContainer.appendChild(pointer);
+            
+            // Add HEAD label to first node
+            if (i === 0) {
+                const head = document.createElement('div');
+                head.className = 'head-label';
+                head.textContent = 'HEAD';
+                nodeContainer.appendChild(head);
             }
             
             container.appendChild(nodeContainer);
             await this.sleep(50);
+        }
+        // Reset traversal pointer indicator
+        this.currentLLPtr = null;
+    }
+
+    updateLinkedListPtr(index) {
+        const nodes = this.structureStage.querySelectorAll('.linkedlist-node');
+        if (!nodes.length) return;
+        if (this.currentLLPtr !== null && nodes[this.currentLLPtr]) {
+            const oldPtr = nodes[this.currentLLPtr].querySelector('.ptr-label');
+            if (oldPtr) oldPtr.remove();
+        }
+        this.currentLLPtr = index;
+        const node = nodes[index];
+        if (node) {
+            const ptr = document.createElement('div');
+            ptr.className = 'ptr-label';
+            ptr.textContent = 'PTR';
+            node.appendChild(ptr);
+        }
+    }
+
+    async moveLLPtrTo(index) {
+        // Moves PTR from head to index, step-by-step
+        for (let i = 0; i <= index; i++) {
+            this.updateLinkedListPtr(i);
+            await this.sleep(this.speed / 1.5);
         }
     }
 
@@ -1086,8 +1254,8 @@ class DataStructureVisualizer {
             queueEnqueue: `// Queue Enqueue\nqueue.push(${value});\n// Time: O(1), Space: O(1)`,
             queueDequeue: `// Queue Dequeue\nlet value = queue.shift();\n// Time: O(1), Space: O(1)`,
             linearSearch: `// Linear Search\nfor (let i = 0; i < array.length; i++) {\n  if (array[i] === ${value}) {\n    return i;\n  }\n}\nreturn -1;\n// Time: O(n), Space: O(1)`,
-            linkedListInsert: `// Linked List Insert\nclass Node {\n  constructor(data) {\n    this.data = ${value};\n    this.next = null;\n  }\n}\n// Time: O(1), Space: O(1)`,
-            linkedListDelete: `// Linked List Delete\nif (current.data === ${value}) {\n  previous.next = current.next;\n}\n// Time: O(n), Space: O(1)`,
+            linkedListInsert: `// Linked List Insert at position ${typeof position==='number'?position:'k'}\nif (position === 0) {\n  newNode.next = head;\n  head = newNode;\n} else {\n  let prev = head;\n  for (let i = 0; i < position - 1; i++) prev = prev.next;\n  newNode.next = prev.next;\n  prev.next = newNode;\n}\n// Time: O(n), Space: O(1)`,
+            linkedListDelete: `// Linked List Delete at position ${typeof position==='number'?position:'k'}\nif (position === 0) {\n  head = head.next;\n} else {\n  let prev = head;\n  for (let i = 0; i < position - 1; i++) prev = prev.next;\n  prev.next = prev.next.next;\n}\n// Time: O(n), Space: O(1)`,
             linkedListSearch: `// Linked List Search\nwhile (current !== null) {\n  if (current.data === ${value}) return current;\n  current = current.next;\n}\n// Time: O(n), Space: O(1)`,
             binaryTreeInsert: `// Binary Tree Insert\nif (!root.left) {\n  root.left = new Node(${value});\n} else if (!root.right) {\n  root.right = new Node(${value});\n}\n// Time: O(n), Space: O(1)`,
             bstInsert: `// BST Insert\nif (${value} < root.data) {\n  root.left = insert(root.left, ${value});\n} else {\n  root.right = insert(root.right, ${value});\n}\n// Time: O(log n), Space: O(log n)`,

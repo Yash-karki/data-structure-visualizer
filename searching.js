@@ -339,15 +339,10 @@ class SearchingVisualizer {
         const info = this.algorithmData[algorithm];
         
         if (info.needsSorted && !this.isSorted) {
-            const shouldSort = confirm("This algorithm requires a sorted array. Would you like to sort the current array?");
-            if (shouldSort) {
-                await this.sortArray();
-                this.isSorted = true;
-                this.updateAlgorithmInfo();
-            } else {
-                this.showError("Algorithm cancelled - array needs to be sorted");
-                return;
-            }
+            this.updateStepInfo("Array must be sorted. Sorting automatically...");
+            await this.sortArray();
+            this.isSorted = true;
+            this.updateAlgorithmInfo();
         }
         
         this.isRunning = true;

@@ -112,8 +112,10 @@ class SortingVisualizer {
         this.stepInfo = document.getElementById("stepInfo");
         this.compCount = document.getElementById("compCount");
         this.swapCount = document.getElementById("swapCount");
+        this.invCount = document.getElementById("invCount");
         this.finalComparisons = document.getElementById("finalComparisons");
         this.finalSwaps = document.getElementById("finalSwaps");
+        this.finalInversions = document.getElementById("finalInversions");
 
         // Algorithm info elements
         this.algorithmName = document.getElementById("algorithmName");
@@ -131,6 +133,7 @@ class SortingVisualizer {
         this.isPaused = false;
         this.comparisons = 0;
         this.swaps = 0;
+        this.inversions = 0;
         this.currentStep = 0;
         this.sortingAlgorithms = new SortingAlgorithms();
         
@@ -266,6 +269,9 @@ class SortingVisualizer {
         this.createBars(array);
         this.resetStats();
         this.updateStepInfo("Array generated - Ready to sort");
+        // compute and show current inversion count for generated array
+        this.inversions = this.countInversionsArray(this.getArrayFromBars());
+        if (this.invCount) this.invCount.textContent = this.inversions;
     }
 
     setCustomArray() {
@@ -289,6 +295,9 @@ class SortingVisualizer {
         this.createBars(input);
         this.resetStats();
         this.updateStepInfo("Custom array set - Ready to sort");
+        // compute and show current inversion count for custom array
+        this.inversions = this.countInversionsArray(this.getArrayFromBars());
+        if (this.invCount) this.invCount.textContent = this.inversions;
     }
 
     createBars(array) {
@@ -325,8 +334,10 @@ class SortingVisualizer {
     resetStats() {
         this.comparisons = 0;
         this.swaps = 0;
+        this.inversions = 0;
         this.compCount.textContent = "0";
         this.swapCount.textContent = "0";
+        if (this.invCount) this.invCount.textContent = "0";
     }
 
     async startSorting() {
@@ -346,6 +357,10 @@ class SortingVisualizer {
         this.updateStepInfo(`Starting ${this.algorithmData[algorithm].name}...`);
         
         try {
+            // freeze and show the real inversion count before sorting starts
+            this.inversions = this.countInversionsArray(this.getArrayFromBars());
+            if (this.invCount) this.invCount.textContent = this.inversions;
+
             await this[algorithm]();
             this.completeSorting();
         } catch (error) {
@@ -413,6 +428,7 @@ class SortingVisualizer {
         setTimeout(() => {
             this.finalComparisons.textContent = this.comparisons;
             this.finalSwaps.textContent = this.swaps;
+            if (this.finalInversions) this.finalInversions.textContent = this.inversions;
             this.doneMessage.classList.add("show");
             this.updateStepInfo("Sorting completed!");
         }, this.bars.length * 50 + 500);
@@ -756,6 +772,39 @@ class SortingVisualizer {
             await this.swap(i, largest);
             await this.heapify(n, largest);
         }
+    }
+
+    // Helpers: compute inversion count non-visually for an array snapshot
+    getArrayFromBars() {
+        return Array.from(this.bars).map(bar => parseInt(bar.dataset.value));
+    }
+
+    countInversionsArray(arr) {
+        const temp = new Array(arr.length);
+        const mergeCount = (left, mid, right) => {
+            let i = left, j = mid + 1, k = left, inv = 0;
+            while (i <= mid && j <= right) {
+                if (arr[i] <= arr[j]) temp[k++] = arr[i++];
+                else {
+                    temp[k++] = arr[j++];
+                    inv += (mid - i + 1);
+                }
+            }
+            while (i <= mid) temp[k++] = arr[i++];
+            while (j <= right) temp[k++] = arr[j++];
+            for (let t = left; t <= right; t++) arr[t] = temp[t];
+            return inv;
+        };
+        const sortCount = (left, right) => {
+            if (left >= right) return 0;
+            const mid = Math.floor((left + right) / 2);
+            let inv = 0;
+            inv += sortCount(left, mid);
+            inv += sortCount(mid + 1, right);
+            inv += mergeCount(left, mid, right);
+            return inv;
+        };
+        return sortCount(0, arr.length - 1);
     }
 }
 

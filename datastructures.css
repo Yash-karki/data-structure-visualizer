@@ -6,7 +6,9 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  background: radial-gradient(1200px 800px at 20% 10%, rgba(255,255,255,0.06) 0%, transparent 60%),
+              radial-gradient(1200px 800px at 80% 80%, rgba(255,255,255,0.06) 0%, transparent 60%),
+              linear-gradient(135deg, #2d3748 0%, #1f2937 50%, #111827 100%);
   color: white;
   display: flex;
   height: 100vh;
@@ -20,15 +22,16 @@ body {
 
 .sidebar {
   width: 350px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
   padding: 2rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
   overflow-y: auto;
+  box-shadow: 2px 0 24px rgba(0,0,0,0.25);
 }
 
 .sidebar h2 {
@@ -66,11 +69,23 @@ body {
 .sidebar select {
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
   font-size: 0.9rem;
   transition: all 0.3s ease;
+}
+
+/* Ensure dropdown options are visible */
+.sidebar select {
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.sidebar select option {
+  background-color: #1f2937;
+  color: #ffffff;
 }
 
 .sidebar input:focus,
@@ -85,10 +100,11 @@ body {
 }
 
 .operation-controls {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.25);
   border-radius: 12px;
   padding: 1.5rem;
   margin: 1rem 0;
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .input-group {
@@ -155,7 +171,7 @@ body {
 .secondary-btn {
   background: rgba(255, 255, 255, 0.1);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   padding: 0.75rem;
   border-radius: 8px;
   font-weight: 500;
@@ -312,10 +328,10 @@ body {
 }
 
 .memory-view {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.25);
   border-radius: 12px;
   padding: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .memory-view h4 {
@@ -362,6 +378,12 @@ body {
   justify-content: center;
   align-items: center;
   position: relative;
+  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px;
 }
 
 .structure-stage {
@@ -376,19 +398,20 @@ body {
 
 /* Data Structure Elements */
 .ds-element {
-  background: linear-gradient(135deg, #4299e1, #3182ce);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 1rem;
-  margin: 4px;
+  margin: 6px;
   font-weight: 600;
   font-size: 1rem;
-  transition: all 0.4s ease;
+  transition: all 0.35s ease;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   min-width: 60px;
   text-align: center;
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
 .ds-element::after {
@@ -432,6 +455,7 @@ body {
   align-items: center;
   flex-wrap: wrap;
   justify-content: center;
+  padding: 0.5rem;
 }
 
 .array-element {
@@ -455,21 +479,36 @@ body {
   gap: 2px;
   min-height: 300px;
   justify-content: flex-start;
+  padding: 1rem 2.5rem;
+  position: relative;
+  border-left: 3px solid rgba(255,255,255,0.25);
+  border-right: 3px solid rgba(255,255,255,0.25);
+  border-bottom: 3px solid rgba(255,255,255,0.25);
+  border-radius: 0 0 10px 10px;
+  box-shadow: inset 0 -10px 30px rgba(0,0,0,0.2);
 }
 
 .stack-element {
   width: 120px;
   position: relative;
+  border: 1px solid rgba(255,255,255,0.12);
+  transform-origin: center;
 }
 
 .stack-pointer {
   position: absolute;
-  right: -40px;
+  right: -70px;
   top: 50%;
   transform: translateY(-50%);
+  background: rgba(255, 215, 0, 0.15);
   color: #ffd700;
+  border: 1px solid rgba(255,215,0,0.5);
+  padding: 4px 8px;
+  border-radius: 999px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
 /* Queue specific styles */
@@ -798,6 +837,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    position: relative;
 }
 
 .node-data {
@@ -815,24 +855,63 @@ body {
 }
 
 .node-pointer {
-    width: 30px;
+    width: 36px;
     height: 2px;
     background: #4c6ef5;
     position: relative;
 }
 
 .node-pointer::after {
-    content: '→';
+    content: '';
     position: absolute;
-    right: -10px;
-    top: -8px;
-    color: #4c6ef5;
-    font-size: 1.2rem;
+    right: -6px;
+    top: -4px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid #4c6ef5;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
 }
 
+.node-pointer.null {
+    background: transparent;
+}
 .node-pointer.null::after {
-    content: '∅';
+    content: 'NULL';
+    position: static;
+    border: none;
     color: #ff6b6b;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+/* Head and traversal pointer badges */
+.head-label {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border: 1px solid rgba(255,215,0,0.5);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.ptr-label {
+    position: absolute;
+    bottom: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(59,130,246,0.2);
+    color: #93c5fd;
+    border: 1px solid rgba(147,197,253,0.5);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 /* Binary Tree Styles */
