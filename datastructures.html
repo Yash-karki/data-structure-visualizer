@@ -37,6 +37,26 @@
           <input type="number" id="positionValue" min="0" value="0" placeholder="Enter position"/>
         </div>
 
+        <div class="linkedlist-controls hidden" id="linkedListControls">
+          <div class="input-group">
+            <label for="insertMode">Insert Mode:</label>
+            <select id="insertMode">
+              <option value="end" selected>At End</option>
+              <option value="beginning">At Beginning</option>
+              <option value="position">At Position</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="deleteMode">Delete Mode:</label>
+            <select id="deleteMode">
+              <option value="value" selected>By Value</option>
+              <option value="beginning">From Beginning</option>
+              <option value="end">From End</option>
+              <option value="position">From Position</option>
+            </select>
+          </div>
+        </div>
+
         <div class="operation-buttons">
           <button id="insertBtn" class="operation-btn insert">Insert</button>
           <button id="deleteBtn" class="operation-btn delete">Delete</button>

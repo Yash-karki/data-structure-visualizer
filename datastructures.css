@@ -115,6 +115,27 @@ body {
   display: none;
 }
 
+.hidden {
+  display: none !important;
+}
+
+.linkedlist-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.linkedlist-controls .input-group {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .linkedlist-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
 .operation-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;

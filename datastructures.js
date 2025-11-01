@@ -133,6 +133,11 @@ class DataStructureVisualizer {
         this.traversalResult = document.getElementById("traversalResult");
         this.traversalOutput = document.getElementById("traversalOutput");
 
+        // Linked list specific controls
+        this.linkedListControls = document.getElementById("linkedListControls");
+        this.insertMode = document.getElementById("insertMode");
+        this.deleteMode = document.getElementById("deleteMode");
+
         // Info elements
         this.structureName = document.getElementById("structureName");
         this.structureDescription = document.getElementById("structureDescription");
@@ -183,7 +188,19 @@ class DataStructureVisualizer {
         });
         this.speedSlider.addEventListener("input", () => this.updateSpeed());
         this.selectDataStructure.addEventListener("change", () => this.updateDataStructure());
-        
+
+        if (this.insertMode) {
+            this.insertMode.addEventListener("change", () => {
+                this.updateLinkedListControls();
+            });
+        }
+
+        if (this.deleteMode) {
+            this.deleteMode.addEventListener("change", () => {
+                this.updateLinkedListControls();
+            });
+        }
+
         // Input validation
         this.operationValue.addEventListener("input", () => this.validateInput());
         this.positionValue.addEventListener("input", () => this.validatePosition());
@@ -243,24 +260,46 @@ class DataStructureVisualizer {
         this.spaceComplexity.textContent = info.space;
         
         this.propertiesList.innerHTML = info.properties.map(prop => `<li>${prop}</li>`).join('');
-        
-        // Update UI based on structure
-        if (this.currentStructure === 'array' || this.currentStructure === 'linkedList') {
-            this.positionGroup.classList.remove('hidden');
-        } else {
-            this.positionGroup.classList.add('hidden');
+
+        const isStack = this.currentStructure === 'stack';
+        const isQueue = this.currentStructure === 'queue';
+
+        if (this.insertBtn) {
+            this.insertBtn.textContent = isStack ? 'Push' : isQueue ? 'Enqueue' : 'Insert';
         }
-        // Adjust action button labels for structure-specific semantics
-        if (this.currentStructure === 'stack') {
-            this.searchBtn.textContent = 'Peek';
-        } else if (this.currentStructure === 'queue') {
-            this.searchBtn.textContent = 'Front/Rear';
-        } else {
-            this.searchBtn.textContent = 'Search';
+        if (this.deleteBtn) {
+            this.deleteBtn.textContent = isStack ? 'Pop' : isQueue ? 'Dequeue' : 'Delete';
         }
-        
+        if (this.searchBtn) {
+            this.searchBtn.textContent = (isStack || isQueue) ? 'Peek' : 'Search';
+        }
+        if (this.traverseBtn) {
+            this.traverseBtn.textContent = 'Traverse';
+        }
+
+        this.updateLinkedListControls();
         this.clearStructure();
         this.updateStepInfo(`${info.name} selected - Ready for operations`);
+    }
+
+    updateLinkedListControls() {
+        const isArray = this.currentStructure === 'array';
+        const isLinkedList = this.currentStructure === 'linkedList';
+        const insertMode = this.insertMode ? this.insertMode.value : 'end';
+        const deleteMode = this.deleteMode ? this.deleteMode.value : 'value';
+
+        if (this.linkedListControls) {
+            this.linkedListControls.classList.toggle('hidden', !isLinkedList);
+        }
+
+        const needsPosition = isArray || (isLinkedList && (insertMode === 'position' || deleteMode === 'position'));
+        if (this.positionGroup) {
+            this.positionGroup.classList.toggle('hidden', !needsPosition);
+        }
+
+        if (!needsPosition && this.positionValue) {
+            this.positionValue.value = 0;
+        }
     }
 
     updateSpeed() {
@@ -325,89 +364,6 @@ class DataStructureVisualizer {
         });
     }
 
-    // Operation handlers with modular approach
-    async insert() {
-        if (this.isRunning) return;
-        
-        const value = parseInt(this.operationValue.value);
-        if (isNaN(value)) {
-            this.showMessage("Please enter a valid number", "❌");
-            return;
-        }
-        
-        this.isRunning = true;
-        this.traversalResult.classList.remove('show');
-        
-        try {
-            await this.executeModuleMethod(this.currentStructure, 'insert', value);
-        } catch (error) {
-            console.error('Insert operation error:', error);
-            this.showMessage("Insert operation failed", "❌");
-        }
-        
-        this.operationValue.value = '';
-        this.isRunning = false;
-    }
-
-    async delete() {
-        if (this.isRunning) return;
-        
-        const value = parseInt(this.operationValue.value);
-        
-        this.isRunning = true;
-        this.traversalResult.classList.remove('show');
-        
-        try {
-            await this.executeModuleMethod(this.currentStructure, 'delete', value);
-        } catch (error) {
-            console.error('Delete operation error:', error);
-            this.showMessage("Delete operation failed", "❌");
-        }
-        
-        this.operationValue.value = '';
-        this.isRunning = false;
-    }
-
-    async search() {
-        if (this.isRunning) return;
-        
-        const value = parseInt(this.operationValue.value);
-        if (isNaN(value)) {
-            this.showMessage("Please enter a valid number", "❌");
-            return;
-        }
-        
-        this.isRunning = true;
-        this.traversalResult.classList.remove('show');
-        
-        try {
-            await this.executeModuleMethod(this.currentStructure, 'search', value);
-        } catch (error) {
-            console.error('Search operation error:', error);
-            this.showMessage("Search operation failed", "❌");
-        }
-        
-        this.operationValue.value = '';
-        this.isRunning = false;
-    }
-
-    async traverse() {
-        if (this.isRunning) return;
-        
-        this.isRunning = true;
-        this.traversalOutput.innerHTML = '';
-        this.traversalResult.classList.add('show');
-        
-        try {
-            await this.executeModuleMethod(this.currentStructure, 'traverse');
-        } catch (error) {
-            console.error('Traverse operation error:', error);
-            this.showMessage("Traverse operation failed", "❌");
-        }
-        
-        this.isRunning = false;
-    }
-
     // Utility methods
     generateRandomData() {
         this.data = [];
@@ -427,40 +383,33 @@ class DataStructureVisualizer {
         
         const value = parseInt(this.operationValue.value);
         const position = parseInt(this.positionValue.value);
-        
-        // Validation rules vary by structure and operation
-        if (operation !== 'traverse' && operation !== 'clear') {
-            if (this.currentStructure === 'array' && operation === 'delete') {
-                // For array delete, we require a valid position (value field ignored)
-                if (isNaN(position)) {
-                    this.showMessage("Please enter a valid position/index", "⚠️");
-                    return;
-                }
-            } else if (this.currentStructure === 'stack' && operation === 'delete') {
-                // Stack pop requires no value
-                // no-op
-            } else if (this.currentStructure === 'queue' && operation === 'delete') {
-                // Queue dequeue requires no value
-                // no-op
-            } else if (operation === 'delete' || operation === 'insert' || operation === 'search') {
-                // For other structures/ops we require a value
-                if (isNaN(value)) {
-                    this.showMessage("Please enter a valid value", "⚠️");
-                    return;
-                }
-            }
+
+        const valueRequired = this.valueRequiredForOperation(operation);
+        if (valueRequired && isNaN(value)) {
+            this.showMessage("Please enter a valid value", "⚠️");
+            this.isRunning = false;
+            this.enableButtons();
+            return;
         }
-        
+
+        const positionRequired = this.positionRequiredForOperation(operation);
+        if (positionRequired && (isNaN(position) || position < 0)) {
+            this.showMessage("Please enter a valid position", "⚠️");
+            this.isRunning = false;
+            this.enableButtons();
+            return;
+        }
+
         this.isRunning = true;
         this.disableButtons();
         
         try {
             switch (operation) {
                 case 'insert':
-                    await this.executeModuleMethod(this.currentStructure, 'insert', value, position);
+                    await this.executeModuleMethod(this.currentStructure, 'insert', value, position, this.insertMode ? this.insertMode.value : undefined);
                     break;
                 case 'delete':
-                    await this.executeModuleMethod(this.currentStructure, 'delete', value, position);
+                    await this.executeModuleMethod(this.currentStructure, 'delete', value, position, this.deleteMode ? this.deleteMode.value : undefined);
                     break;
                 case 'search':
                     await this.executeModuleMethod(this.currentStructure, 'search', value);
@@ -480,6 +429,48 @@ class DataStructureVisualizer {
         
         this.isRunning = false;
         this.enableButtons();
+    }
+
+    valueRequiredForOperation(operation) {
+        if (this.currentStructure === 'linkedList') {
+            if (operation === 'delete') {
+                const mode = this.deleteMode ? this.deleteMode.value : 'value';
+                return mode === 'value' || mode === 'position';
+            }
+            if (operation === 'insert') {
+                return true;
+            }
+        }
+
+        if (this.currentStructure === 'stack') {
+            if (operation === 'delete' || operation === 'search') {
+                return false;
+            }
+        }
+
+        if (this.currentStructure === 'queue') {
+            if (operation === 'delete' || operation === 'search') {
+                return false;
+            }
+        }
+
+        if (this.currentStructure === 'array' && operation === 'delete') {
+            return false;
+        }
+
+        return !(operation === 'traverse' || operation === 'clear');
+    }
+
+    positionRequiredForOperation(operation) {
+        if (this.currentStructure === 'linkedList') {
+            if (operation === 'insert') {
+                return this.insertMode && this.insertMode.value === 'position';
+            }
+            if (operation === 'delete') {
+                return this.deleteMode && this.deleteMode.value === 'position';
+            }
+        }
+        return false;
     }
 
     // Array Operations
@@ -731,78 +722,116 @@ class DataStructureVisualizer {
     }
 
     // Linked List Operations
-    async insertLinkedList(value, position) {
-        this.showMessage(`Inserting ${value} into linked list`, "➕");
-        this.updateCodeView('linkedListInsert', value);
-        
-        // Determine position: if not provided -> end; clamp to [0, length]
-        let pos = parseInt(position);
-        if (isNaN(pos)) pos = this.data.length; // default to end
-        if (pos < 0) pos = 0;
-        if (pos > this.data.length) pos = this.data.length;
-        
-        // Visualize traversal to position-1 (node after which we insert)
-        if (pos > 0) {
-            await this.moveLLPtrTo(pos - 1);
+    async insertLinkedList(value, position, mode = 'end') {
+        const insertMode = mode || 'end';
+        const listLength = this.data.length;
+        let targetIndex = listLength;
+
+        if (insertMode === 'beginning') {
+            targetIndex = 0;
+        } else if (insertMode === 'position') {
+            if (!Number.isInteger(position)) {
+                this.showMessage("Please provide a valid position for insertion", "❌");
+                return;
+            }
+            if (position < 0 || position > listLength) {
+                this.showMessage("Position out of range for insertion", "❌");
+                return;
+            }
+            targetIndex = position;
         } else {
-            // Point to head
-            this.updateLinkedListPtr(0);
-            await this.sleep(this.speed / 2);
+            targetIndex = listLength;
         }
-        
-        this.data.splice(pos, 0, value);
+
+        const messageSuffix = insertMode === 'beginning'
+            ? "at the beginning"
+            : insertMode === 'position'
+                ? `at position ${targetIndex}`
+                : "at the end";
+
+        const codeKey = insertMode === 'beginning'
+            ? 'linkedListInsertBeginning'
+            : insertMode === 'position'
+                ? 'linkedListInsertPosition'
+                : 'linkedListInsertEnd';
+
+        this.showMessage(`Inserting ${value} ${messageSuffix}`, "➕");
+        this.updateCodeView(codeKey, value, targetIndex);
+
+        this.data.splice(targetIndex, 0, value);
         await this.renderLinkedList();
         this.updateSize();
         this.updateMemoryView();
-        
-        this.showMessage(`Inserted ${value} at position ${pos}`, "✅");
+
+        this.showMessage(`Successfully inserted ${value} ${messageSuffix}`, "✅");
     }
 
-    async deleteLinkedList(value, position) {
-        // Deletion by position if provided, else by value
-        let index = -1;
-        const pos = parseInt(position);
-        if (!isNaN(pos)) {
-            if (pos < 0 || pos >= this.data.length) {
-                this.showMessage("Invalid position for delete", "❌");
+    async deleteLinkedList(value, position, mode = 'value') {
+        if (this.data.length === 0) {
+            this.showMessage("Linked list is empty", "❌");
+            return;
+        }
+
+        const deleteMode = mode || 'value';
+        let removeIndex = -1;
+        let removedValue = null;
+
+        if (deleteMode === 'beginning') {
+            removeIndex = 0;
+        } else if (deleteMode === 'end') {
+            removeIndex = this.data.length - 1;
+        } else if (deleteMode === 'position') {
+            if (!Number.isInteger(position)) {
+                this.showMessage("Please provide a valid position for deletion", "❌");
                 return;
             }
-            index = pos;
+            if (position < 0 || position >= this.data.length) {
+                this.showMessage("Position out of range for deletion", "❌");
+                return;
+            }
+            removeIndex = position;
         } else {
-            index = this.data.indexOf(value);
-            if (index === -1) {
-                this.showMessage(`Value ${value} not found in linked list`, "❌");
+            removeIndex = this.data.indexOf(value);
+            if (removeIndex === -1) {
+                this.showMessage(`${value} not found in linked list`, "❌");
                 return;
             }
         }
-        
-        this.showMessage(`Deleting node at position ${index}`, "🗑️");
-        this.updateCodeView('linkedListDelete', value);
-        
-        // Visualize traversal to node to delete
-        if (index > 0) {
-            await this.moveLLPtrTo(index - 1);
-        } else {
-            this.updateLinkedListPtr(0);
-            await this.sleep(this.speed / 2);
+
+        removedValue = this.data[removeIndex];
+
+        const messageSuffix = deleteMode === 'beginning'
+            ? "from the beginning"
+            : deleteMode === 'end'
+                ? "from the end"
+                : deleteMode === 'position'
+                    ? `from position ${removeIndex}`
+                    : `value ${value}`;
+
+        const codeKey = deleteMode === 'beginning'
+            ? 'linkedListDeleteBeginning'
+            : deleteMode === 'end'
+                ? 'linkedListDeleteEnd'
+                : deleteMode === 'position'
+                    ? 'linkedListDeletePosition'
+                    : 'linkedListDelete';
+
+        this.showMessage(`Deleting ${messageSuffix}`, "🗑️");
+        this.updateCodeView(codeKey, removedValue, removeIndex);
+
+        // Highlight node before removal
+        const elements = this.structureStage.querySelectorAll('.node-data');
+        if (elements[removeIndex]) {
+            elements[removeIndex].classList.add('deleting');
+            await this.sleep(this.speed);
         }
-        
-        // Highlight node to delete
-        const nodes = this.structureStage.querySelectorAll('.linkedlist-node');
-        if (nodes[index]) {
-            const dataEl = nodes[index].querySelector('.node-data');
-            if (dataEl) {
-                dataEl.classList.add('deleting');
-                await this.sleep(this.speed);
-            }
-        }
-        
-        this.data.splice(index, 1);
+
+        this.data.splice(removeIndex, 1);
         await this.renderLinkedList();
         this.updateSize();
         this.updateMemoryView();
         
-        this.showMessage(`Deleted node at position ${index}`, "✅");
+        this.showMessage(`Successfully deleted ${removedValue} ${messageSuffix}`, "✅");
     }
 
     async searchLinkedList(value) {
@@ -1247,16 +1276,21 @@ class DataStructureVisualizer {
 
     updateCodeView(operation, value, position) {
         const codeExamples = {
-            arrayInsert: `// Array Insert at position ${position || 0}\narray.splice(${position || 0}, 0, ${value});\n// Time: O(n), Space: O(1)`,
-            arrayDelete: `// Array Delete at position ${position || 0}\narray.splice(${position || 0}, 1);\n// Time: O(n), Space: O(1)`,
+            arrayInsert: `// Array Insert at position ${typeof position==='number'?position:'k'}\narray.splice(${position || 0}, 0, ${value});\n// Time: O(n), Space: O(1)`,
+            arrayDelete: `// Array Delete at position ${typeof position==='number'?position:'k'}\narray.splice(${position || 0}, 1);\n// Time: O(n), Space: O(1)`,
             stackPush: `// Stack Push\nstack.push(${value});\n// Time: O(1), Space: O(1)`,
             stackPop: `// Stack Pop\nlet value = stack.pop();\n// Time: O(1), Space: O(1)`,
             queueEnqueue: `// Queue Enqueue\nqueue.push(${value});\n// Time: O(1), Space: O(1)`,
             queueDequeue: `// Queue Dequeue\nlet value = queue.shift();\n// Time: O(1), Space: O(1)`,
             linearSearch: `// Linear Search\nfor (let i = 0; i < array.length; i++) {\n  if (array[i] === ${value}) {\n    return i;\n  }\n}\nreturn -1;\n// Time: O(n), Space: O(1)`,
-            linkedListInsert: `// Linked List Insert at position ${typeof position==='number'?position:'k'}\nif (position === 0) {\n  newNode.next = head;\n  head = newNode;\n} else {\n  let prev = head;\n  for (let i = 0; i < position - 1; i++) prev = prev.next;\n  newNode.next = prev.next;\n  prev.next = newNode;\n}\n// Time: O(n), Space: O(1)`,
-            linkedListDelete: `// Linked List Delete at position ${typeof position==='number'?position:'k'}\nif (position === 0) {\n  head = head.next;\n} else {\n  let prev = head;\n  for (let i = 0; i < position - 1; i++) prev = prev.next;\n  prev.next = prev.next.next;\n}\n// Time: O(n), Space: O(1)`,
-            linkedListSearch: `// Linked List Search\nwhile (current !== null) {\n  if (current.data === ${value}) return current;\n  current = current.next;\n}\n// Time: O(n), Space: O(1)`,
+            linkedListInsert: `// Linked List Insert\nclass Node {\n  constructor(data) {\n    this.data = ${value};\n    this.next = null;\n  }\n}\n// Time: O(1), Space: O(1)` ,
+            linkedListInsertBeginning: `// Linked List Insert at beginning\nconst newNode = new Node(${value});\nnewNode.next = head;\nhead = newNode;\n// Time: O(1)` ,
+            linkedListInsertEnd: `// Linked List Insert at end\nconst newNode = new Node(${value});\nlet current = head;\nwhile (current.next) {\n  current = current.next;\n}\ncurrent.next = newNode;\n// Time: O(n)` ,
+            linkedListInsertPosition: `// Linked List Insert at position ${position || 0}\nconst newNode = new Node(${value});\nlet current = head;\nlet idx = 0;\nwhile (idx < ${position || 0} - 1) {\n  current = current.next;\n  idx++;\n}\nnewNode.next = current.next;\ncurrent.next = newNode;\n// Time: O(n)` ,
+            linkedListDelete: `// Linked List Delete\nif (current.data === ${value}) {\n  previous.next = current.next;\n}\n// Time: O(n), Space: O(1)`,
+            linkedListDeleteBeginning: `// Linked List Delete beginning\nif (head) {\n  head = head.next;\n}\n// Time: O(1)` ,
+            linkedListDeleteEnd: `// Linked List Delete end\nlet current = head;\nlet prev = null;\nwhile (current.next) {\n  prev = current;\n  current = current.next;\n}\nif (prev) {\n  prev.next = null;\n}\n// Time: O(n)` ,
+            linkedListDeletePosition: `// Linked List Delete at position ${position || 0}\nlet current = head;\nlet idx = 0;\nwhile (idx < ${position || 0}) {\n  prev = current;\n  current = current.next;\n  idx++;\n}\nprev.next = current.next;\n// Time: O(n)` ,
             binaryTreeInsert: `// Binary Tree Insert\nif (!root.left) {\n  root.left = new Node(${value});\n} else if (!root.right) {\n  root.right = new Node(${value});\n}\n// Time: O(n), Space: O(1)`,
             bstInsert: `// BST Insert\nif (${value} < root.data) {\n  root.left = insert(root.left, ${value});\n} else {\n  root.right = insert(root.right, ${value});\n}\n// Time: O(log n), Space: O(log n)`,
             bstDelete: `// BST Delete\nif (${value} < root.data) {\n  root.left = delete(root.left, ${value});\n} else if (${value} > root.data) {\n  root.right = delete(root.right, ${value});\n}\n// Time: O(log n), Space: O(log n)`,
