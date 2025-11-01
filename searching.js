@@ -531,13 +531,14 @@ class SearchingVisualizer {
 
     async jumpSearch(target) {
         const n = this.array.length;
-        const step = Math.floor(Math.sqrt(n));
+        const baseStep = Math.max(1, Math.floor(Math.sqrt(n)));
+        let step = baseStep;
         let prev = 0;
         
         this.currentStep.textContent = `Jump size: ${step}. Jumping through array...`;
         
         // Find the block where element is present
-        while (this.array[Math.min(step, n) - 1] < target) {
+        while (prev < n && this.array[Math.min(step, n) - 1] < target) {
             if (!this.isRunning) return { found: false, index: -1 };
             
             await this.highlightElement(Math.min(step, n) - 1, "pivot");
@@ -551,8 +552,7 @@ class SearchingVisualizer {
             await this.unhighlightElement(Math.min(step, n) - 1, "pivot");
             
             prev = step;
-            step += Math.floor(Math.sqrt(n));
-            
+            step += baseStep;
             if (prev >= n) {
                 this.currentStep.textContent = `Reached end of array. Target ${target} not found`;
                 return { found: false, index: -1 };

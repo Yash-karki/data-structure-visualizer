@@ -297,8 +297,19 @@ class DataStructureVisualizer {
             this.positionGroup.classList.toggle('hidden', !needsPosition);
         }
 
-        if (!needsPosition && this.positionValue) {
-            this.positionValue.value = 0;
+        if (this.positionValue) {
+            if (needsPosition) {
+                const currentVal = parseInt(this.positionValue.value);
+                if (this.currentStructure === 'linkedList') {
+                    this.positionValue.min = 1;
+                    this.positionValue.value = Number.isInteger(currentVal) && currentVal >= 1 ? currentVal : 1;
+                } else if (this.currentStructure === 'array') {
+                    this.positionValue.min = 0;
+                    this.positionValue.value = Number.isInteger(currentVal) && currentVal >= 0 ? currentVal : 0;
+                }
+            } else {
+                this.positionValue.value = this.currentStructure === 'linkedList' ? 1 : 0;
+            }
         }
     }
 
@@ -315,9 +326,15 @@ class DataStructureVisualizer {
     }
 
     validatePosition() {
+        if (!this.positionValue) return;
         const value = parseInt(this.positionValue.value);
-        if (value < 0) this.positionValue.value = 0;
-        if (value > this.data.length) this.positionValue.value = this.data.length;
+        if (this.currentStructure === 'linkedList') {
+            if (value < 1 || isNaN(value)) this.positionValue.value = 1;
+            if (value > this.data.length + 1) this.positionValue.value = this.data.length + 1;
+        } else {
+            if (value < 0 || isNaN(value)) this.positionValue.value = 0;
+            if (value > this.data.length) this.positionValue.value = this.data.length;
+        }
     }
 
     sleep(ms) {
@@ -382,7 +399,7 @@ class DataStructureVisualizer {
         if (this.isRunning) return;
         
         const value = parseInt(this.operationValue.value);
-        const position = parseInt(this.positionValue.value);
+        const positionInput = this.positionValue ? parseInt(this.positionValue.value) : NaN;
 
         const valueRequired = this.valueRequiredForOperation(operation);
         if (valueRequired && isNaN(value)) {
@@ -393,8 +410,30 @@ class DataStructureVisualizer {
         }
 
         const positionRequired = this.positionRequiredForOperation(operation);
-        if (positionRequired && (isNaN(position) || position < 0)) {
-            this.showMessage("Please enter a valid position", "⚠️");
+        if (positionRequired) {
+            const minPosition = this.currentStructure === 'linkedList' ? 1 : 0;
+            if (isNaN(positionInput) || positionInput < minPosition) {
+                this.showMessage(`Please enter a valid position (starting from ${minPosition})`, "⚠️");
+                this.isRunning = false;
+                this.enableButtons();
+                return;
+            }
+        }
+
+        if (this.currentStructure === 'linkedList' && (this.insertMode && this.insertMode.value === 'position')) {
+            if (isNaN(positionInput) || positionInput < 1) {
+                this.showMessage("Please enter a valid position (starting from 1)", "⚠️");
+                this.isRunning = false;
+                this.enableButtons();
+                return;
+            }
+        }
+
+        const normalizedPosition = Number.isInteger(positionInput) ? positionInput : 0;
+        const zeroBasedPosition = this.currentStructure === 'linkedList' ? normalizedPosition - 1 : normalizedPosition;
+
+        if (this.currentStructure === 'linkedList' && zeroBasedPosition > this.data.length) {
+            this.showMessage("Position out of range", "⚠️");
             this.isRunning = false;
             this.enableButtons();
             return;
@@ -406,10 +445,10 @@ class DataStructureVisualizer {
         try {
             switch (operation) {
                 case 'insert':
-                    await this.executeModuleMethod(this.currentStructure, 'insert', value, position, this.insertMode ? this.insertMode.value : undefined);
+                    await this.executeModuleMethod(this.currentStructure, 'insert', value, this.currentStructure === 'linkedList' ? normalizedPosition : zeroBasedPosition, this.insertMode ? this.insertMode.value : undefined);
                     break;
                 case 'delete':
-                    await this.executeModuleMethod(this.currentStructure, 'delete', value, position, this.deleteMode ? this.deleteMode.value : undefined);
+                    await this.executeModuleMethod(this.currentStructure, 'delete', value, this.currentStructure === 'linkedList' ? normalizedPosition : zeroBasedPosition, this.deleteMode ? this.deleteMode.value : undefined);
                     break;
                 case 'search':
                     await this.executeModuleMethod(this.currentStructure, 'search', value);
@@ -462,15 +501,22 @@ class DataStructureVisualizer {
     }
 
     positionRequiredForOperation(operation) {
-        if (this.currentStructure === 'linkedList') {
-            if (operation === 'insert') {
-                return this.insertMode && this.insertMode.value === 'position';
+        if (this.currentStructure === 'array') {
+            this.positionGroup.classList.remove('hidden');
+            if (this.positionValue) {
+                this.positionValue.min = 0;
+                if (parseInt(this.positionValue.value) < 0) this.positionValue.value = 0;
             }
-            if (operation === 'delete') {
-                return this.deleteMode && this.deleteMode.value === 'position';
+        } else if (this.currentStructure === 'linkedList') {
+            this.positionGroup.classList.remove('hidden');
+            if (this.positionValue) {
+                this.positionValue.min = 1;
+                if (parseInt(this.positionValue.value) < 1) this.positionValue.value = 1;
             }
+        } else {
+            this.positionGroup.classList.add('hidden');
         }
-        return false;
+        return this.deleteMode && this.deleteMode.value === 'position';
     }
 
     // Array Operations
@@ -674,24 +720,25 @@ class DataStructureVisualizer {
         
         const elements = this.structureStage.querySelectorAll('.ds-element');
         let found = false;
-        
+
         for (let i = 0; i < this.data.length; i++) {
-            if (elements[i]) {
-                elements[i].classList.add('highlight');
-                await this.sleep(this.speed);
-                
-                if (this.data[i] === value) {
-                    elements[i].classList.remove('highlight');
-                    elements[i].classList.add('success');
-                    this.showMessage(`Found ${value} at position ${i}`, "✅");
-                    found = true;
-                    break;
-                } else {
-                    elements[i].classList.remove('highlight');
-                }
+            if (!elements[i]) continue;
+
+            elements[i].classList.add('highlight');
+            await this.sleep(this.speed);
+
+            if (this.data[i] === value) {
+                elements[i].classList.remove('highlight');
+                elements[i].classList.add('success');
+                this.showMessage(`Found ${value} at position ${i}`, "✅");
+                found = true;
+                break;
             }
+
+            elements[i].classList.remove('highlight');
+            elements[i].classList.add('checked');
         }
-        
+
         if (!found) {
             this.showMessage(`${value} not found in structure`, "❌");
         }
@@ -734,11 +781,12 @@ class DataStructureVisualizer {
                 this.showMessage("Please provide a valid position for insertion", "❌");
                 return;
             }
-            if (position < 0 || position > listLength) {
+            const zeroBased = position - 1;
+            if (zeroBased < 0 || zeroBased > listLength) {
                 this.showMessage("Position out of range for insertion", "❌");
                 return;
             }
-            targetIndex = position;
+            targetIndex = zeroBased;
         } else {
             targetIndex = listLength;
         }
@@ -746,7 +794,7 @@ class DataStructureVisualizer {
         const messageSuffix = insertMode === 'beginning'
             ? "at the beginning"
             : insertMode === 'position'
-                ? `at position ${targetIndex}`
+                ? `at position ${position}`
                 : "at the end";
 
         const codeKey = insertMode === 'beginning'
@@ -759,7 +807,7 @@ class DataStructureVisualizer {
         this.updateCodeView(codeKey, value, targetIndex);
 
         this.data.splice(targetIndex, 0, value);
-        await this.renderLinkedList();
+        await this.renderLinkedList(position);
         this.updateSize();
         this.updateMemoryView();
 
@@ -785,11 +833,12 @@ class DataStructureVisualizer {
                 this.showMessage("Please provide a valid position for deletion", "❌");
                 return;
             }
-            if (position < 0 || position >= this.data.length) {
+            const zeroBased = position - 1;
+            if (zeroBased < 0 || zeroBased >= this.data.length) {
                 this.showMessage("Position out of range for deletion", "❌");
                 return;
             }
-            removeIndex = position;
+            removeIndex = zeroBased;
         } else {
             removeIndex = this.data.indexOf(value);
             if (removeIndex === -1) {
@@ -805,7 +854,7 @@ class DataStructureVisualizer {
             : deleteMode === 'end'
                 ? "from the end"
                 : deleteMode === 'position'
-                    ? `from position ${removeIndex}`
+                    ? `from position ${position}`
                     : `value ${value}`;
 
         const codeKey = deleteMode === 'beginning'
@@ -827,7 +876,7 @@ class DataStructureVisualizer {
         }
 
         this.data.splice(removeIndex, 1);
-        await this.renderLinkedList();
+        await this.renderLinkedList(position);
         this.updateSize();
         this.updateMemoryView();
         
@@ -1286,11 +1335,11 @@ class DataStructureVisualizer {
             linkedListInsert: `// Linked List Insert\nclass Node {\n  constructor(data) {\n    this.data = ${value};\n    this.next = null;\n  }\n}\n// Time: O(1), Space: O(1)` ,
             linkedListInsertBeginning: `// Linked List Insert at beginning\nconst newNode = new Node(${value});\nnewNode.next = head;\nhead = newNode;\n// Time: O(1)` ,
             linkedListInsertEnd: `// Linked List Insert at end\nconst newNode = new Node(${value});\nlet current = head;\nwhile (current.next) {\n  current = current.next;\n}\ncurrent.next = newNode;\n// Time: O(n)` ,
-            linkedListInsertPosition: `// Linked List Insert at position ${position || 0}\nconst newNode = new Node(${value});\nlet current = head;\nlet idx = 0;\nwhile (idx < ${position || 0} - 1) {\n  current = current.next;\n  idx++;\n}\nnewNode.next = current.next;\ncurrent.next = newNode;\n// Time: O(n)` ,
+            linkedListInsertPosition: `// Linked List Insert at position ${position || 1}\nconst newNode = new Node(${value});\nif (${position || 1} === 1) {\n  newNode.next = head;\n  head = newNode;\n} else {\n  let current = head;\n  let idx = 1;\n  while (idx < ${position || 1} - 1) {\n    current = current.next;\n    idx++;\n  }\n  newNode.next = current.next;\n  current.next = newNode;\n}\n// Time: O(n)` ,
             linkedListDelete: `// Linked List Delete\nif (current.data === ${value}) {\n  previous.next = current.next;\n}\n// Time: O(n), Space: O(1)`,
             linkedListDeleteBeginning: `// Linked List Delete beginning\nif (head) {\n  head = head.next;\n}\n// Time: O(1)` ,
             linkedListDeleteEnd: `// Linked List Delete end\nlet current = head;\nlet prev = null;\nwhile (current.next) {\n  prev = current;\n  current = current.next;\n}\nif (prev) {\n  prev.next = null;\n}\n// Time: O(n)` ,
-            linkedListDeletePosition: `// Linked List Delete at position ${position || 0}\nlet current = head;\nlet idx = 0;\nwhile (idx < ${position || 0}) {\n  prev = current;\n  current = current.next;\n  idx++;\n}\nprev.next = current.next;\n// Time: O(n)` ,
+            linkedListDeletePosition: `// Linked List Delete at position ${position || 1}\nif (${position || 1} === 1) {\n  head = head.next;\n} else {\n  let current = head;\n  let prev = null;\n  let idx = 1;\n  while (idx < ${position || 1}) {\n    prev = current;\n    current = current.next;\n    idx++;\n  }\n  prev.next = current.next;\n}\n// Time: O(n)` ,
             binaryTreeInsert: `// Binary Tree Insert\nif (!root.left) {\n  root.left = new Node(${value});\n} else if (!root.right) {\n  root.right = new Node(${value});\n}\n// Time: O(n), Space: O(1)`,
             bstInsert: `// BST Insert\nif (${value} < root.data) {\n  root.left = insert(root.left, ${value});\n} else {\n  root.right = insert(root.right, ${value});\n}\n// Time: O(log n), Space: O(log n)`,
             bstDelete: `// BST Delete\nif (${value} < root.data) {\n  root.left = delete(root.left, ${value});\n} else if (${value} > root.data) {\n  root.right = delete(root.right, ${value});\n}\n// Time: O(log n), Space: O(log n)`,

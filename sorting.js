@@ -136,6 +136,7 @@ class SortingVisualizer {
         this.inversions = 0;
         this.currentStep = 0;
         this.sortingAlgorithms = new SortingAlgorithms();
+        this.maxBarValue = 0;
         
         this.speedMap = {
             1: { value: 1000, label: "Very Slow" },
@@ -305,25 +306,34 @@ class SortingVisualizer {
         this.bars = [];
         this.originalArray = [...array];
         
-        const maxVal = Math.max(...array);
-        const stageHeight = this.stage.clientHeight - 40;
-        
+        const maxVal = array.length ? Math.max(...array) : 1;
+        this.maxBarValue = Math.max(maxVal, 1);
+        const stageHeight = Math.max(this.stage.clientHeight - 40, 120);
+        const availableWidth = this.stage.clientWidth || this.stage.parentElement?.clientWidth || window.innerWidth;
+        const baseWidth = array.length ? (availableWidth - array.length * 2) / array.length : availableWidth;
+        const computedWidth = Number.isFinite(baseWidth) ? baseWidth : 12;
+        const barWidth = Math.max(8, Math.min(40, computedWidth));
+
         array.forEach((val, index) => {
             const bar = document.createElement("div");
-            bar.classList.add("bar");
-            
-            const height = (val / maxVal) * stageHeight;
-            bar.style.height = `${height}px`;
-            bar.style.width = `${Math.max(8, Math.min(40, (this.stage.clientWidth - array.length * 2) / array.length))}px`;
-            
-            // Show value only if bars are wide enough
-            if (bar.style.width.replace('px', '') > 20) {
-                bar.textContent = val;
+            bar.className = "bar";
+
+            if (barWidth >= 26) {
+                bar.classList.add("bar-wide");
             }
-            
+
+            const height = this.maxBarValue ? (val / this.maxBarValue) * stageHeight : stageHeight;
+            bar.style.height = `${Math.max(height, 6)}px`;
+            bar.style.width = `${barWidth}px`;
+
             bar.dataset.value = val;
             bar.dataset.index = index;
-            
+
+            const label = document.createElement("span");
+            label.className = "bar-label";
+            label.textContent = val;
+            bar.appendChild(label);
+
             this.stage.appendChild(bar);
             this.bars.push(bar);
         });
@@ -474,17 +484,22 @@ class SortingVisualizer {
         this.bars[j].classList.add("swapping");
         
         // Swap the DOM elements
-        const tempHeight = this.bars[i].style.height;
-        const tempText = this.bars[i].textContent;
-        const tempValue = this.bars[i].dataset.value;
+        const barA = this.bars[i];
+        const barB = this.bars[j];
+        const labelA = barA.querySelector('.bar-label');
+        const labelB = barB.querySelector('.bar-label');
         
-        this.bars[i].style.height = this.bars[j].style.height;
-        this.bars[i].textContent = this.bars[j].textContent;
-        this.bars[i].dataset.value = this.bars[j].dataset.value;
+        const tempHeight = barA.style.height;
+        const valueA = barA.dataset.value;
+        const valueB = barB.dataset.value;
+
+        barA.style.height = barB.style.height;
+        barA.dataset.value = valueB;
+        if (labelA) labelA.textContent = valueB;
         
-        this.bars[j].style.height = tempHeight;
-        this.bars[j].textContent = tempText;
-        this.bars[j].dataset.value = tempValue;
+        barB.style.height = tempHeight;
+        barB.dataset.value = valueA;
+        if (labelB) labelB.textContent = valueA;
         
         this.swaps++;
         this.swapCount.textContent = this.swaps;
@@ -663,15 +678,17 @@ class SortingVisualizer {
     }
 
     async updateBarValue(index, value) {
-        const maxVal = Math.max(...Array.from(this.bars).map(bar => parseInt(bar.dataset.value)));
-        const stageHeight = this.stage.clientHeight - 40;
-        const height = (value / maxVal) * stageHeight;
+        const bar = this.bars[index];
+        const stageHeight = Math.max(this.stage.clientHeight - 40, 120);
+        const maxVal = this.maxBarValue || value;
+        const height = maxVal ? (value / maxVal) * stageHeight : stageHeight;
         
-        this.bars[index].style.height = `${height}px`;
-        this.bars[index].dataset.value = value;
-        
-        if (this.bars[index].style.width.replace('px', '') > 20) {
-            this.bars[index].textContent = value;
+        bar.style.height = `${Math.max(height, 6)}px`;
+        bar.dataset.value = value;
+
+        const label = bar.querySelector('.bar-label');
+        if (label) {
+            label.textContent = value;
         }
         
         this.bars[index].classList.add("swapping");
